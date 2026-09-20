@@ -51,11 +51,27 @@ spec:
     namespace: nginx-lab
 
   # ---------- SYNC BEHAVIOUR ----------
-  # `automated:` block yahan JAAN-BOOJH KE NAHI hai.
-  # Iska matlab: MANUAL sync. Argo CD difference DIKHAYEGA (OutOfSync),
-  # par apne aap apply NAHI karega -- aapko button dabana padega.
-  # Phase 4 ke end mein hum automated on karenge.
   syncPolicy:
+    # AB AUTOMATED. Argo CD har ~3 min (ya webhook par) Git padhega
+    # aur farak khud mita dega -- koi button nahi dabana padega.
+    automated:
+      # prune: Git se resource HATA do -> cluster se bhi DELETE ho jayega.
+      # Default false hai safety ke liye; on karne se ek galat commit
+      # resources uda sakta hai. Isliye Git review (PR) zaroori ho jata hai.
+      prune: true
+      # selfHeal: koi manually `kubectl scale/edit` kare -> Argo CD usko
+      # Git wali state par WAPAS kheench lega. Drift automatically mitega.
+      # Dhyan: emergency mein aapka manual fix bhi undo ho jayega.
+      selfHeal: true
+      # allowEmpty false = agar render hoke 0 resource aaye to sync mat karo
+      # (galti se poora chart delete hone se bachata hai)
+      allowEmpty: false
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
     syncOptions:
       # Namespace na ho to bana do.
       - CreateNamespace=true
