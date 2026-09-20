@@ -1,0 +1,112 @@
+# ============================================================
+# CI = Continuous Integration -> code ko VALIDATE karta hai
+# CD = Argo CD ka kaam -> Git se cluster mein DEPLOY karta hai
+#
+# YEH WORKFLOW CLUSTER KO CHHUTA HI NAHI.
+# Koi kubeconfig, koi cluster credential, koi Argo CD token yahan NAHI hai.
+# Reason: GitHub-hosted runner internet par chalta hai; aapka minikube
+# laptop par 127.0.0.1 hai -- runner usko reach hi nahi kar sakta.
+# Isliye: CI validate karta hai, Argo CD Git se PULL karta hai.
+# ============================================================
+name: helm-validate
+
+on:
+  pull_request:
+    paths:
+      - 'charts/**'
+      - '.github/workflows/helm-validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'charts/**'
+      - '.github/workflows/helm-validate.yml'
+  # Manually bhi chala sakte ho (Actions tab se)
+  workflow_dispatch:
+
+# Least privilege: is workflow ko sirf code PADHNA hai.
+permissions:
+  contents: read
+
+# Nayi push aaye to purana run cancel -- CI minutes bachate hain
+concurrency:
+  group: helm-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Local laptop ke versions ke saath match -- "works on my machine" se bachne ke liye
+  HELM_VERSION: v3.16.4
+  KUBECONFORM_VERSION: v0.8.0
+  # Kis Kubernetes version ke against validate karna hai (minikube ke barabar)
+  KUBE_VERSION: "1.37.0"
+  CHART: charts/nginx
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      # ---------- STEP 1: structure check ----------
+      # Chart.yaml sahi hai? templates parse ho rahe hain? values missing nahi?
+      - name: helm lint
+        run: helm lint ${{ env.CHART }} --strict
+
+      # ---------- STEP 2: rendering check ----------
+      # Templates se actual YAML banta hai? Variable typo nahi?
+      - name: helm template
+        run: |
+          helm template nginx-lab ${{ env.CHART }} \
+            --namespace nginx-lab > /tmp/rendered.yaml
+          echo "rendered $(grep -c '^kind:' /tmp/rendered.yaml) resources"
+          cat /tmp/rendered.yaml
+
+      # ---------- STEP 3: schema check ----------
+      # helm lint yeh NAHI pakadta: replicas: "two" jaisi invalid VALUE.
+      # kubeconform real Kubernetes OpenAPI schema ke against check karta hai.
+      - name: Install kubeconform
+        run: |
+          curl -sSLo /tmp/kc.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          tar -xzf /tmp/kc.tar.gz -C /tmp kubeconform
+          sudo install -m 755 /tmp/kubeconform /usr/local/bin/kubeconform
+          kubeconform -v
+
+      - name: kubeconform (validate against k8s ${{ env.KUBE_VERSION }})
+        run: |
+          kubeconform \
+            -kubernetes-version "${KUBE_VERSION}" \
+            -strict \
+            -summary \
+            /tmp/rendered.yaml
+
+      # ---------- STEP 4: edge cases ----------
+      # Non-default values ke saath bhi chart render hona chahiye.
+      - name: Render with alternate values
+        run: |
+          echo "--- page disabled + 1 replica + NodePort"
+          helm template nginx-lab ${{ env.CHART }} \
+            --set page.enabled=false \
+            --set replicaCount=1 \
+            --set service.type=NodePort \
+            | kubeconform -kubernetes-version "${KUBE_VERSION}" -strict -summary -
+
+      - name: Summary
+        run: |
+          {
+            echo "### Helm chart validated"
+            echo ""
+            echo "| check | status |"
+            echo "|---|---|"
+            echo "| helm lint --strict | pass |"
+            echo "| helm template | pass |"
+            echo "| kubeconform (k8s ${KUBE_VERSION}) | pass |"
+            echo "| alternate values | pass |"
+            echo ""
+            echo "Deploy **nahi** hua -- Argo CD Git se khud pull karega."
+          } >> "$GITHUB_STEP_SUMMARY"
