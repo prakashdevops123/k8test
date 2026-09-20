@@ -46,10 +46,10 @@ probes:
   # liveness FAIL   -> pod ko RESTART kiya jata hai (woh hang ho gaya maana)
   liveness:
     enabled: true
-    path: /
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    failureThreshold: 3
+    path: /healthz-does-not-exist
+    initialDelaySeconds: 3
+    periodSeconds: 3
+    failureThreshold: 1
 
 # Custom homepage. Isse GitOps ka "aha moment" milega:
 # Git mein message badlo -> push karo -> browser mein badla hua dikhega.
