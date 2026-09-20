@@ -28,7 +28,7 @@ service:
 resources:
   requests:
     cpu: 25m          # 25m = 0.025 CPU core
-    memory: 32Mi
+    memory: 48Mi
   limits:
     cpu: 200m
     memory: 128Mi
