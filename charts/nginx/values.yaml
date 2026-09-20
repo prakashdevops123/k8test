@@ -31,7 +31,7 @@ resources:
     memory: 64Gi
   limits:
     cpu: 200m
-    memory: 128Mi
+    memory: 64Gi
 
 # Health probes -- Kubernetes ko kaise pata chale ki pod theek hai?
 probes:
