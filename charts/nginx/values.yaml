@@ -28,10 +28,10 @@ service:
 resources:
   requests:
     cpu: 25m          # 25m = 0.025 CPU core
-    memory: 64Gi
+    memory: 32Mi
   limits:
     cpu: 200m
-    memory: 64Gi
+    memory: 128Mi
 
 # Health probes -- Kubernetes ko kaise pata chale ki pod theek hai?
 probes:
