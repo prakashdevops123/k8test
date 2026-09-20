@@ -1,0 +1,6 @@
+# Yeh patterns `helm package` ke time chart se bahar rehte hain.
+.git/
+.gitignore
+*.tmp
+*.bak
+.DS_Store

@@ -1,0 +1,22 @@
+# apiVersion v2 = Helm 3 chart. v1 purane Helm 2 ke liye tha.
+apiVersion: v2
+
+# Chart ka naam. Release name + isi se resource names bante hain.
+name: nginx
+
+description: A beginner-friendly NGINX chart for a Helm + Argo CD GitOps lab
+
+# "application" = deploy hone wala chart. "library" = sirf helpers share karta hai.
+type: application
+
+# version = CHART ka version. Template/logic badlo -> yeh badhao (SemVer).
+version: 0.1.0
+
+# appVersion = andar chalne wale SOFTWARE ka version (yahan NGINX).
+# Quotes zaroori hain, warna 1.31.6 ko YAML number samajh sakta hai.
+appVersion: "1.31.6"
+
+keywords:
+  - nginx
+  - gitops
+  - learning

@@ -1,0 +1,12 @@
+NGINX deploy ho gaya!  release={{ .Release.Name }}  ns={{ .Release.Namespace }}
+
+Replicas : {{ .Values.replicaCount }}
+Image    : {{ .Values.image.repository }}:{{ .Values.image.tag }}
+Service  : {{ include "nginx.fullname" . }} ({{ .Values.service.type }}:{{ .Values.service.port }})
+
+Check karo:
+  kubectl get pods,svc -n {{ .Release.Namespace }}
+
+Browser mein kholo:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "nginx.fullname" . }} 8080:{{ .Values.service.port }}
+  # phir: http://localhost:8080

@@ -1,0 +1,72 @@
+# ============================================================
+# values.yaml  =  chart ke saare "knobs" (settings)
+# Templates ismein se {{ .Values.xxx }} kar ke padhte hain.
+# GitOps mein AAP SIRF YEH FILE badlenge -> Argo CD baaki sambhal lega.
+# ============================================================
+
+# Kitne nginx pods chahiye. Exercise 1 mein isko badlenge.
+replicaCount: 2
+
+image:
+  repository: nginx
+  # Tag ALWAYS explicit rakho. "latest" kabhi mat use karo production mein --
+  # kyunki phir aapko pata hi nahi chalega kaunsa version chal raha hai.
+  tag: "1.31.6-alpine"
+  # IfNotPresent = image local mein hai to dobara download na karo.
+  pullPolicy: IfNotPresent
+
+service:
+  # ClusterIP = sirf cluster ke andar se reachable. Lab ke liye safest.
+  # NodePort / LoadBalancer bahar expose karte hain.
+  type: ClusterIP
+  port: 80          # Service kis port par sunegi
+  targetPort: 80    # Container ke andar kaunsa port
+
+# Resources = scheduler ko batao pod ko kitna chahiye.
+#   requests -> GUARANTEED minimum (scheduler isi se node choose karta hai)
+#   limits   -> HARD maximum (CPU throttle hoti hai, memory par pod OOMKill hota hai)
+resources:
+  requests:
+    cpu: 25m          # 25m = 0.025 CPU core
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+# Health probes -- Kubernetes ko kaise pata chale ki pod theek hai?
+probes:
+  # readiness FAIL  -> pod ko Service se HATA diya jata hai (traffic band)
+  #                    par pod restart NAHI hota
+  readiness:
+    enabled: true
+    path: /
+    initialDelaySeconds: 3
+    periodSeconds: 5
+    failureThreshold: 3
+  # liveness FAIL   -> pod ko RESTART kiya jata hai (woh hang ho gaya maana)
+  liveness:
+    enabled: true
+    path: /
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 3
+
+# Custom homepage. Isse GitOps ka "aha moment" milega:
+# Git mein message badlo -> push karo -> browser mein badla hua dikhega.
+page:
+  enabled: true
+  title: "Helm + Argo CD Lab"
+  message: "Hello from Git! Change me in values.yaml"
+  color: "#0b6efd"
+
+# Resource ke naam override karne ke liye (khaali = default naam).
+nameOverride: ""
+fullnameOverride: ""
+
+# Extra labels/annotations chahiye to yahan daalo.
+podLabels: {}
+podAnnotations: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

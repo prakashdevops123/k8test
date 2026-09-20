@@ -1,0 +1,25 @@
+{{/* page.enabled false karo to yeh ConfigMap bane hi nahi -- nginx default page dikhegi */}}
+{{- if .Values.page.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nginx.fullname" . }}-page
+  labels:
+    {{- include "nginx.labels" . | nindent 4 }}
+data:
+  # Yeh file container ke andar /usr/share/nginx/html/index.html ban jayegi
+  index.html: |
+    <!doctype html>
+    <html>
+      <head><meta charset="utf-8"><title>{{ .Values.page.title }}</title></head>
+      <body style="font-family:system-ui;text-align:center;padding:4rem;">
+        <h1 style="color:{{ .Values.page.color }}">{{ .Values.page.title }}</h1>
+        <p style="font-size:1.25rem">{{ .Values.page.message }}</p>
+        <hr style="max-width:20rem;margin:2rem auto">
+        <p>chart <b>{{ .Chart.Name }}-{{ .Chart.Version }}</b>
+           &middot; nginx <b>{{ .Values.image.tag }}</b>
+           &middot; replicas <b>{{ .Values.replicaCount }}</b></p>
+        <p style="color:#888">release: {{ .Release.Name }} / ns: {{ .Release.Namespace }}</p>
+      </body>
+    </html>
+{{- end }}

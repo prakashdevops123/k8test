@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nginx.fullname" . }}
+  labels:
+    {{- include "nginx.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}          # Service ka port
+      targetPort: http                          # container ka NAMED port (deployment mein define)
+      protocol: TCP
+      name: http
+  # selector = "in labels wale pods ko traffic bhejo".
+  # Yahan SIRF selectorLabels use karte hain -- common labels NAHI,
+  # kyunki version badalne par selector toot jayega.
+  selector:
+    {{- include "nginx.selectorLabels" . | nindent 4 }}
