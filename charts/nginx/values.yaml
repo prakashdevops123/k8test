@@ -5,7 +5,7 @@
 # ============================================================
 
 # Kitne nginx pods chahiye. Exercise 1 mein isko badlenge.
-replicaCount: 2
+replicaCount: 3
 
 image:
   repository: nginx
