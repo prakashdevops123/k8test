@@ -56,8 +56,8 @@ probes:
 page:
   enabled: true
   title: "Helm + Argo CD Lab"
-  message: "Hello from Git! Change me in values.yaml"
-  color: "#0b6efd"
+  message: "Shipped via pull request + Argo CD"
+  color: "#127c56"
 
 # Resource ke naam override karne ke liye (khaali = default naam).
 nameOverride: ""
