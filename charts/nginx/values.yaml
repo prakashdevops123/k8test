@@ -11,7 +11,7 @@ image:
   repository: nginx
   # Tag ALWAYS explicit rakho. "latest" kabhi mat use karo production mein --
   # kyunki phir aapko pata hi nahi chalega kaunsa version chal raha hai.
-  tag: "1.99.99-doesnotexist"
+  tag: "1.31.6-alpine"
   # IfNotPresent = image local mein hai to dobara download na karo.
   pullPolicy: IfNotPresent
 
@@ -28,7 +28,7 @@ service:
 resources:
   requests:
     cpu: 25m          # 25m = 0.025 CPU core
-    memory: 48Mi
+    memory: 64Gi
   limits:
     cpu: 200m
     memory: 128Mi
