@@ -1,0 +1,64 @@
+# ============================================================
+# Argo CD Application = "kaunsa Git ka kaunsa folder,
+#                        kaunse cluster ke kaunse namespace mein jayega"
+#
+# Yeh khud ek Kubernetes object hai (CRD), isliye ise bhi Git mein
+# rakhte hain -- GitOps ka "app-of-apps" pattern isi par bana hai.
+# ============================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-lab
+  # Application HAMESHA argocd namespace mein rehti hai,
+  # chahe app kahin bhi deploy ho.
+  namespace: argocd
+
+  finalizers:
+    # Yeh finalizer kehta hai: "App delete karo -> uske deploy kiye
+    # resources bhi delete karo" (cascade delete).
+    # Iske BINA app delete hone par pods cluster mein orphan pade rehte hain.
+    - resources-finalizer.argocd.argoproj.io
+
+spec:
+  # project = RBAC/guardrail boundary. "default" sab kuch allow karta hai.
+  # Production mein apna project banate hain jo allowed repos/clusters/kinds limit kare.
+  project: default
+
+  # ---------- DESIRED STATE kahan se aayega ----------
+  source:
+    repoURL: https://github.com/prakashdevops123/k8test.git
+
+    # Branch, tag, ya commit SHA. "main" = hamesha latest.
+    # Production mein aksar tag/SHA pin karte hain taaki deploy reproducible ho.
+    targetRevision: main
+
+    # Repo ke andar chart ka path.
+    path: charts/nginx
+
+    helm:
+      # Argo CD `helm install` NAHI chalata -- woh `helm template` chala kar
+      # plain YAML banata hai, phir usko apply karta hai.
+      # Isliye `helm list` mein yeh release kabhi nahi dikhega.
+      valueFiles:
+        - values.yaml
+      releaseName: nginx-lab
+
+  # ---------- LIVE STATE kahan jayega ----------
+  destination:
+    # Argo CD jis cluster mein khud chal raha hai, uska internal address.
+    # Ye "in-cluster" destination hai.
+    server: https://kubernetes.default.svc
+    namespace: nginx-lab
+
+  # ---------- SYNC BEHAVIOUR ----------
+  # `automated:` block yahan JAAN-BOOJH KE NAHI hai.
+  # Iska matlab: MANUAL sync. Argo CD difference DIKHAYEGA (OutOfSync),
+  # par apne aap apply NAHI karega -- aapko button dabana padega.
+  # Phase 4 ke end mein hum automated on karenge.
+  syncPolicy:
+    syncOptions:
+      # Namespace na ho to bana do.
+      - CreateNamespace=true
+      # Sync ke waqt server-side apply use karo (wahi cheez jisne
+      # Phase 3 mein bade CRD wala error fix kiya tha).
+      - ServerSideApply=true
